@@ -19,13 +19,21 @@ function Register() {
     e.preventDefault();
 
     try {
-      const response = await api.post("/students", register);
+      if (register.password !== register.validPassword)
+        return alert("senhas diferentes");
+
+      const objectRegister = {
+        ra: register.ra,
+        name: register.name,
+        email: register.email,
+        password: register.password,
+      };
+
+      const response = await api.post("/students", objectRegister);
 
       console.log(response.data);
 
-      //implementar a autorização
-
-      history.push("/students");
+      history.push("/home");
     } catch (error) {
       console.error(error);
       alert(error.response.data.error);
@@ -34,6 +42,15 @@ function Register() {
 
   const handleInput = (e) => {
     setRegister({ ...register, [e.target.id]: e.target.value });
+  };
+
+  const buttonDisabled = () => {
+    const { ra, name, email, password, validPassword } = register;
+
+    if (!ra || !name || !email || !password || password !== validPassword)
+      return true;
+
+    return false;
   };
 
   return (
@@ -80,11 +97,17 @@ function Register() {
             id="validPassword"
             label="Confirmar Senha"
             type="password"
+            onBlur={(e) => {
+              if (register.password !== register.validPassword)
+                alert("As senhas precisam ser iguais");
+              e.target.focus();
+            }}
             value={register.validPassword}
             handler={handleInput}
             required
           />
-          <Button>Enviar</Button>
+
+          <Button disabled={buttonDisabled()}>Enviar</Button>
           <Link to="/">Ou, se já tem cadastro, clique para entrar</Link>
         </Body>
       </FormLogin>
