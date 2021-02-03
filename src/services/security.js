@@ -12,7 +12,7 @@ export const signIn = (user) => {
 export const signOut = () => {
   localStorage.removeItem(USER_KEY);
 
-  api.defaults.headers.common["Autorizathion"] = undefined;
+  api.defaults.headers.common["Authorization"] = undefined;
 };
 
 export const getUser = () => {
@@ -27,7 +27,7 @@ export const isSignedIn = () => {
   if (user && user.token) {
     //verificar se o token é válido
 
-    api.defaults.headers.common["Autorizathion"] = `Bearer ${user.token}`;
+    api.defaults.headers.common["Authorization"] = `Bearer ${user.token}`;
     return true;
   }
 
