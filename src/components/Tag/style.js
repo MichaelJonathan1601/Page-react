@@ -17,7 +17,7 @@ export const Container = styled.article`
     font-size: 20px;
 
     :hover {
-      color: var(--dark);
+      color: var(--primary);
     }
   }
 `;
