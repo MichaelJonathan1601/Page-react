@@ -22,6 +22,7 @@ import Modal from "../../components/modal";
 import Input from "../../components/Input";
 import Select from "../../components/Select";
 import Tag from "../../components/Tag";
+import Loading from "../../components/Loading";
 
 function Profile() {
   const student = getUser();
@@ -69,7 +70,7 @@ function Answer({ answer }) {
   );
 }
 
-function Question({ question }) {
+function Question({ question, setLoading }) {
   const [showAnswers, setShowAnswers] = useState(false);
 
   const [newAnswer, setNewAnswer] = useState("");
@@ -86,6 +87,8 @@ function Question({ question }) {
     e.preventDefault();
 
     if (newAnswer.length < 10) return alert("Minimo de caracteres: 10");
+
+    setLoading(true);
 
     try {
       const response = await api.post(`/questions/${question.id}/answers`, {
@@ -107,8 +110,11 @@ function Question({ question }) {
       setAnswers([...answers, answerAdded]);
 
       setNewAnswer("");
+
+      setLoading(false);
     } catch (error) {
       alert(error);
+      setLoading(false);
     }
   };
 
@@ -167,7 +173,7 @@ function Question({ question }) {
   );
 }
 
-function NewQuestion({ handleReload }) {
+function NewQuestion({ handleReload, setLoading }) {
   const [newQuestion, setNewQuestion] = useState({
     title: "",
     description: "",
@@ -250,6 +256,8 @@ function NewQuestion({ handleReload }) {
     if (image) data.append("image", image);
     if (newQuestion.gist) data.append("gist", newQuestion.gist);
 
+    setLoading(true);
+
     try {
       await api.post("/questions", data, {
         headers: {
@@ -260,58 +268,61 @@ function NewQuestion({ handleReload }) {
       handleReload();
     } catch (error) {
       alert(error);
+      setLoading(false);
     }
   };
 
   return (
-    <FormNewQuestion onSubmit={handleAddNewQuestion}>
-      <Input
-        id="title"
-        label="Título"
-        value={newQuestion.title}
-        handler={handleInput}
-        required
-      />
-      <Input
-        id="description"
-        label="Descrição"
-        minLength="10"
-        value={newQuestion.description}
-        handler={handleInput}
-        required
-      />
-      <Input
-        id="gist"
-        label="Gist"
-        value={newQuestion.gist}
-        handler={handleInput}
-      />
-      <Select
-        id="categories"
-        label="Categorias"
-        handler={handleCategories}
-        ref={categoriesRef}
-      >
-        <option value="">Selecione</option>
-        {categories.map((c) => (
-          <option key={c.id} value={c.id}>
-            {c.description}
-          </option>
-        ))}
-      </Select>
-      <div>
-        {categoriesSel.map((c) => (
-          <Tag
-            key={c.id}
-            info={c.description}
-            handleClose={() => handleUnselCategory(c.id)}
-          ></Tag>
-        ))}
-      </div>
-      <input type="file" onChange={handleImage} />
-      <img alt="Pré-visualização" ref={imageRef} />
-      <button>Enviar</button>
-    </FormNewQuestion>
+    <>
+      <FormNewQuestion onSubmit={handleAddNewQuestion}>
+        <Input
+          id="title"
+          label="Título"
+          value={newQuestion.title}
+          handler={handleInput}
+          required
+        />
+        <Input
+          id="description"
+          label="Descrição"
+          minLength="10"
+          value={newQuestion.description}
+          handler={handleInput}
+          required
+        />
+        <Input
+          id="gist"
+          label="Gist"
+          value={newQuestion.gist}
+          handler={handleInput}
+        />
+        <Select
+          id="categories"
+          label="Categorias"
+          handler={handleCategories}
+          ref={categoriesRef}
+        >
+          <option value="">Selecione</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.description}
+            </option>
+          ))}
+        </Select>
+        <div>
+          {categoriesSel.map((c) => (
+            <Tag
+              key={c.id}
+              info={c.description}
+              handleClose={() => handleUnselCategory(c.id)}
+            ></Tag>
+          ))}
+        </div>
+        <input type="file" onChange={handleImage} />
+        <img alt="Pré-visualização" ref={imageRef} />
+        <button onClick={() => setLoading(true)}>Enviar</button>
+      </FormNewQuestion>
+    </>
   );
 }
 
@@ -322,13 +333,18 @@ function Home() {
 
   const [reload, setReload] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+
   const [showNewQuestion, setShowNewQuestion] = useState(false);
 
   useEffect(() => {
     const loadQuestions = async () => {
+      setLoading(true);
+
       const response = await api.get("/feed");
 
       setQuestions(response.data);
+      setLoading(false);
     };
 
     loadQuestions();
@@ -347,12 +363,13 @@ function Home() {
 
   return (
     <>
+      {loading && <Loading />}
       {showNewQuestion && (
         <Modal
           title="Faça uma pergunta"
           handleClose={() => setShowNewQuestion(false)}
         >
-          <NewQuestion handleReload={handleReload} />
+          <NewQuestion handleReload={handleReload} setLoading={setLoading} />
         </Modal>
       )}
 
@@ -367,7 +384,7 @@ function Home() {
           </ProfileContainer>
           <FeedContainer>
             {questions.map((q) => (
-              <Question question={q} />
+              <Question question={q} setLoading={setLoading} />
             ))}
           </FeedContainer>
           <ActionsContainer>

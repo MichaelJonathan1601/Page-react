@@ -3,9 +3,14 @@ import { Container, FormLogin, Header, Body, Button } from "./styles";
 import { Link, useHistory } from "react-router-dom";
 import { api } from "../../services/api";
 import { useState } from "react";
+import { signIn } from "../../services/security";
+import Loading from "../../components/Loading";
+import { set } from "date-fns";
 
 function Register() {
   const history = useHistory();
+
+  const [loading, setLoading] = useState(false);
 
   const [register, setRegister] = useState({
     ra: "",
@@ -29,9 +34,13 @@ function Register() {
         password: register.password,
       };
 
+      setLoading(true);
+
       const response = await api.post("/students", objectRegister);
 
-      console.log(response.data);
+      signIn(response.data);
+
+      setLoading(false);
 
       history.push("/home");
     } catch (error) {
@@ -54,64 +63,67 @@ function Register() {
   };
 
   return (
-    <Container>
-      <FormLogin onSubmit={handleSubmit}>
-        <Header>
-          <h1>BEM VINDO AO SENAIOVERFLOW</h1>
-          <h2>INFORME OS SEUS DADOS</h2>
-        </Header>
-        <Body>
-          <Input
-            id="ra"
-            label="RA"
-            type="text"
-            value={register.ra}
-            handler={handleInput}
-            required
-          />
-          <Input
-            id="name"
-            label="Nome"
-            type="text"
-            value={register.name}
-            handler={handleInput}
-            required
-          />
-          <Input
-            id="email"
-            label="E-mail"
-            type="email"
-            value={register.email}
-            handler={handleInput}
-            required
-          />
-          <Input
-            id="password"
-            label="Senha"
-            type="password"
-            value={register.password}
-            handler={handleInput}
-            required
-          />
-          <Input
-            id="validPassword"
-            label="Confirmar Senha"
-            type="password"
-            onBlur={(e) => {
-              if (register.password !== register.validPassword)
-                alert("As senhas precisam ser iguais");
-              e.target.focus();
-            }}
-            value={register.validPassword}
-            handler={handleInput}
-            required
-          />
+    <>
+      {loading && <Loading></Loading>}
+      <Container>
+        <FormLogin onSubmit={handleSubmit}>
+          <Header>
+            <h1>BEM VINDO AO SENAIOVERFLOW</h1>
+            <h2>INFORME OS SEUS DADOS</h2>
+          </Header>
+          <Body>
+            <Input
+              id="ra"
+              label="RA"
+              type="text"
+              value={register.ra}
+              handler={handleInput}
+              required
+            />
+            <Input
+              id="name"
+              label="Nome"
+              type="text"
+              value={register.name}
+              handler={handleInput}
+              required
+            />
+            <Input
+              id="email"
+              label="E-mail"
+              type="email"
+              value={register.email}
+              handler={handleInput}
+              required
+            />
+            <Input
+              id="password"
+              label="Senha"
+              type="password"
+              value={register.password}
+              handler={handleInput}
+              required
+            />
+            <Input
+              id="validPassword"
+              label="Confirmar Senha"
+              type="password"
+              onBlur={(e) => {
+                if (register.password !== register.validPassword)
+                  alert("As senhas precisam ser iguais");
+                e.target.focus();
+              }}
+              value={register.validPassword}
+              handler={handleInput}
+              required
+            />
 
-          <Button disabled={buttonDisabled()}>Enviar</Button>
-          <Link to="/">Ou, se já tem cadastro, clique para entrar</Link>
-        </Body>
-      </FormLogin>
-    </Container>
+            <Button disabled={buttonDisabled()}>Enviar</Button>
+            <Link to="/">Ou, se já tem cadastro, clique para entrar</Link>
+          </Body>
+        </FormLogin>
+      </Container>
+    </>
   );
 }
 
