@@ -9,6 +9,8 @@ import {
   Logo,
   IconSignOut,
   FormNewQuestion,
+  GistIcon,
+  ContainerGist,
 } from "./styles";
 
 import imgProfile from "../../assets/foto_perfil.png";
@@ -24,6 +26,8 @@ import Select from "../../components/Select";
 import Tag from "../../components/Tag";
 import Loading from "../../components/Loading";
 import { validSquaredImage } from "../../utils";
+import { FaGithub } from "react-icons/fa";
+import ReactEmbedGist from "react-embed-gist";
 
 function Profile({ setLoading, handleReload, setMessage }) {
   const [student, setStudent] = useState(getUser());
@@ -100,7 +104,7 @@ function Answer({ answer }) {
   );
 }
 
-function Question({ question, setLoading }) {
+function Question({ question, setLoading, setCurrentGist }) {
   const [showAnswers, setShowAnswers] = useState(false);
 
   const [newAnswer, setNewAnswer] = useState("");
@@ -167,6 +171,9 @@ function Question({ question, setLoading }) {
         <p>
           em {format(new Date(question.created_at), "dd/MM/yyyy 'as' HH:mm")}
         </p>
+        {question.gist && (
+          <GistIcon onClick={() => setCurrentGist(question.gist)} />
+        )}
       </header>
       <section>
         <strong>{question.title} </strong>
@@ -360,6 +367,22 @@ function NewQuestion({ handleReload, setLoading }) {
   );
 }
 
+function Gist({ gist, handleClose }) {
+  if (gist) {
+    const formatedGist = gist.split(".com/").pop();
+    return (
+      <Modal
+        title="Exemplo de código"
+        handleClose={() => handleClose(undefined)}
+      >
+        <ContainerGist>
+          <ReactEmbedGist gist={formatedGist} />
+        </ContainerGist>
+      </Modal>
+    );
+  } else return null;
+}
+
 function Home() {
   const history = useHistory();
 
@@ -370,6 +393,8 @@ function Home() {
   const [loading, setLoading] = useState(false);
 
   const [showNewQuestion, setShowNewQuestion] = useState(false);
+
+  const [currentGist, setCurrentGist] = useState(undefined);
 
   useEffect(() => {
     const loadQuestions = async () => {
@@ -398,6 +423,9 @@ function Home() {
   return (
     <>
       {loading && <Loading />}
+
+      <Gist gist={currentGist} handleClose={setCurrentGist} />
+
       {showNewQuestion && (
         <Modal
           title="Faça uma pergunta"
@@ -418,7 +446,11 @@ function Home() {
           </ProfileContainer>
           <FeedContainer>
             {questions.map((q) => (
-              <Question question={q} setLoading={setLoading} />
+              <Question
+                question={q}
+                setLoading={setLoading}
+                setCurrentGist={setCurrentGist}
+              />
             ))}
           </FeedContainer>
           <ActionsContainer>
