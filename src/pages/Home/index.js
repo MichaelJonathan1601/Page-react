@@ -28,6 +28,7 @@ import Loading from "../../components/Loading";
 import { validSquaredImage } from "../../utils";
 import { FaGithub } from "react-icons/fa";
 import ReactEmbedGist from "react-embed-gist";
+import Search from "../../components/Search";
 
 function Profile({ setLoading, handleReload, setMessage }) {
   const [student, setStudent] = useState(getUser());
@@ -396,6 +397,8 @@ function Home() {
 
   const [currentGist, setCurrentGist] = useState(undefined);
 
+  const [search, setSearch] = useState("");
+
   useEffect(() => {
     const loadQuestions = async () => {
       setLoading(true);
@@ -420,6 +423,20 @@ function Home() {
     setReload(Math.random());
   };
 
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    const loadQuestions = async () => {
+      setLoading(true);
+      const response = await api.get(`/search/:description${e.target.value}`);
+      setQuestions(response.data);
+      setLoading(false);
+      return response;
+    };
+
+    loadQuestions();
+  };
+
   return (
     <>
       {loading && <Loading />}
@@ -438,6 +455,7 @@ function Home() {
       <Container>
         <Header>
           <Logo src={logo} onClick={handleReload} />
+          <Search label="Pesquisar" id="search" handler={handleSearch} />
           <IconSignOut onClick={handleSignOut} />
         </Header>
         <Content>
