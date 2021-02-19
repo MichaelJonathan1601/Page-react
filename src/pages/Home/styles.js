@@ -1,5 +1,5 @@
-import { FaSignOutAlt, FaGithub } from "react-icons/fa";
-import styled from "styled-components";
+import { FaGithub, FaSignOutAlt } from "react-icons/fa";
+import styled, { keyframes } from "styled-components";
 
 export const Container = styled.div`
   width: 100vw;
@@ -230,6 +230,7 @@ export const FormNewQuestion = styled.form`
     display: flex;
     flex-wrap: wrap;
   }
+
   > img {
     align-self: center;
     max-width: 40%;
@@ -254,8 +255,20 @@ export const GistIcon = styled(FaGithub)`
   }
 `;
 
+const slide = keyframes`
+  0%{
+    transform: scale(0.1);
+  }
+
+  100%{
+    transform: scale(1);
+  }
+`;
+
 export const ContainerGist = styled.section`
   margin-top: 10px;
+
+  animation: ${slide} 0.8s;
 
   h2 {
     font-size: 16px;

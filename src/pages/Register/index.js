@@ -1,18 +1,15 @@
-import Input from "../../components/Input";
-import { Container, FormLogin, Header, Body, Button } from "./styles";
-import { Link, useHistory } from "react-router-dom";
-import { api } from "../../services/api";
 import { useState } from "react";
-import { signIn } from "../../services/security";
+import { Link, useHistory } from "react-router-dom";
+import Input from "../../components/Input";
 import Loading from "../../components/Loading";
-import { set } from "date-fns";
+import { api } from "../../services/api";
+import { signIn } from "../../services/security";
+import { Container, FormLogin, Header, Body, Button } from "./styles";
 
 function Register() {
   const history = useHistory();
 
-  const [loading, setLoading] = useState(false);
-
-  const [register, setRegister] = useState({
+  const [student, setStudent] = useState({
     ra: "",
     name: "",
     email: "",
@@ -20,51 +17,54 @@ function Register() {
     validPassword: "",
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleInput = (e) => {
+    setStudent({ ...student, [e.target.id]: e.target.value });
+  };
+
+  const validPassword = () => student.password === student.validPassword;
+
+  const buttonDisabled = () => {
+    const { ra, name, email, password } = student;
+
+    if (!ra || !name || !email || !password || !validPassword()) return true;
+
+    return false;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!validPassword()) return alert("As senhas precisam ser iguais!");
+
+    setIsLoading(true);
+
     try {
-      if (register.password !== register.validPassword)
-        return alert("senhas diferentes");
+      const { ra, name, email, password } = student;
 
-      const objectRegister = {
-        ra: register.ra,
-        name: register.name,
-        email: register.email,
-        password: register.password,
-      };
-
-      setLoading(true);
-
-      const response = await api.post("/students", objectRegister);
+      const response = await api.post("/students", {
+        ra,
+        name,
+        email,
+        password,
+      });
 
       signIn(response.data);
 
-      setLoading(false);
+      setIsLoading(false);
 
       history.push("/home");
     } catch (error) {
       console.error(error);
       alert(error.response.data.error);
+      setIsLoading(false);
     }
-  };
-
-  const handleInput = (e) => {
-    setRegister({ ...register, [e.target.id]: e.target.value });
-  };
-
-  const buttonDisabled = () => {
-    const { ra, name, email, password, validPassword } = register;
-
-    if (!ra || !name || !email || !password || password !== validPassword)
-      return true;
-
-    return false;
   };
 
   return (
     <>
-      {loading && <Loading></Loading>}
+      {isLoading && <Loading />}
       <Container>
         <FormLogin onSubmit={handleSubmit}>
           <Header>
@@ -76,48 +76,41 @@ function Register() {
               id="ra"
               label="RA"
               type="text"
-              value={register.ra}
+              value={student.ra}
               handler={handleInput}
-              required
             />
             <Input
               id="name"
               label="Nome"
               type="text"
-              value={register.name}
+              value={student.name}
               handler={handleInput}
-              required
             />
             <Input
               id="email"
               label="E-mail"
               type="email"
-              value={register.email}
+              value={student.email}
               handler={handleInput}
-              required
             />
             <Input
               id="password"
               label="Senha"
               type="password"
-              value={register.password}
+              value={student.password}
               handler={handleInput}
-              required
             />
             <Input
               id="validPassword"
               label="Confirmar Senha"
               type="password"
               onBlur={(e) => {
-                if (register.password !== register.validPassword)
-                  alert("As senhas precisam ser iguais");
+                if (!validPassword()) alert("As senhas precisam ser iguais");
                 e.target.focus();
               }}
-              value={register.validPassword}
+              value={student.validPassword}
               handler={handleInput}
-              required
             />
-
             <Button disabled={buttonDisabled()}>Enviar</Button>
             <Link to="/">Ou, se já tem cadastro, clique para entrar</Link>
           </Body>

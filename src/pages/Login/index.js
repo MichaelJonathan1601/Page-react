@@ -1,42 +1,42 @@
-import Input from "../../components/Input";
-import { Container, FormLogin, Header, Body, Button } from "./styles";
-import { Link, useHistory } from "react-router-dom";
-import { api } from "../../services/api";
 import { useState } from "react";
-import { signIn } from "../../services/security";
-import Loading from "../../components/Loading";
+import { Link, useHistory } from "react-router-dom";
 import Alert from "../../components/Alert";
+import Input from "../../components/Input";
+import Loading from "../../components/Loading";
+
+import { api } from "../../services/api";
+import { signIn } from "../../services/security";
+import { Container, FormLogin, Header, Body, Button } from "./styles";
 
 function Login() {
   const history = useHistory();
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [message, setMessage] = useState(undefined);
 
   const [login, setLogin] = useState({
     email: "",
     password: "",
   });
 
-  const [loading, setLoading] = useState(false);
-
-  const [message, setMessage] = useState(undefined);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const response = await api.post("/sessions", login);
 
       signIn(response.data);
 
-      setLoading(false);
-      //implementar a autorização
+      setIsLoading(false);
 
       history.push("/home");
     } catch (error) {
       console.error(error);
       setMessage({ title: "Ops...", description: error.response.data.error });
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -47,9 +47,7 @@ function Login() {
   return (
     <>
       <Alert message={message} type="error" handleClose={setMessage} />
-
-      {loading && <Loading />}
-
+      {isLoading && <Loading />}
       <Container>
         <FormLogin onSubmit={handleSubmit}>
           <Header>
@@ -74,7 +72,7 @@ function Login() {
               required
             />
             <Button>Entrar</Button>
-            <Link to="/register">Ou clique aqui para se cadastrar</Link>
+            <Link to="/register"> Ou clique aqui para se cadastrar</Link>
           </Body>
         </FormLogin>
       </Container>

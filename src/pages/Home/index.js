@@ -1,3 +1,7 @@
+import { useEffect, useRef, useState } from "react";
+import { useHistory } from "react-router-dom";
+import { format } from "date-fns";
+import ReactEmbedGist from "react-embed-gist";
 import {
   Container,
   Header,
@@ -13,24 +17,26 @@ import {
   ContainerGist,
 } from "./styles";
 
+import Input from "../../components/Input";
 import imgProfile from "../../assets/foto_perfil.png";
 import logo from "../../assets/logo.png";
-import { useEffect, useState, useRef } from "react";
 import { api } from "../../services/api";
-import { signOut, getUser, setUser } from "../../services/security";
-import { useHistory } from "react-router";
-import { format } from "date-fns";
-import Modal from "../../components/modal";
-import Input from "../../components/Input";
+import { getUser, setUser, signOut } from "../../services/security";
+import Modal from "../../components/Modal";
 import Select from "../../components/Select";
 import Tag from "../../components/Tag";
 import Loading from "../../components/Loading";
 import { validSquaredImage } from "../../utils";
-import { FaGithub } from "react-icons/fa";
-import ReactEmbedGist from "react-embed-gist";
-import Search from "../../components/Search";
+import {
+  FaGithub,
+  FaGithubAlt,
+  FaGithubSquare,
+  FaReacteurope,
+} from "react-icons/fa";
+import SpinnerLoading from "../../components/SpinnerLoading";
+import InputSearch from "../../components/InputSearch";
 
-function Profile({ setLoading, handleReload, setMessage }) {
+function Profile({ setIsLoading, handleReload, setMessage }) {
   const [student, setStudent] = useState(getUser());
 
   const handleImage = async (e) => {
@@ -38,30 +44,31 @@ function Profile({ setLoading, handleReload, setMessage }) {
 
     try {
       await validSquaredImage(e.target.files[0]);
+
       const data = new FormData();
 
       data.append("image", e.target.files[0]);
 
-      setLoading(true);
+      setIsLoading(true);
 
       const response = await api.post(`/students/${student.id}/images`, data);
 
       setTimeout(() => {
-        setStudent({ ...student, profile_image: response.data.profile_image });
+        setStudent({ ...student, image: response.data.image });
         handleReload();
       }, 1000);
 
-      setUser({ ...student, profile_image: response.data.profile_image });
+      setUser({ ...student, image: response.data.image });
     } catch (error) {
       alert(error);
-      setLoading();
+      setIsLoading(false);
     }
   };
 
   return (
     <>
       <section>
-        <img src={student.profile_image || imgProfile} alt="Imagem de perfil" />
+        <img src={student.image || imgProfile} alt="Imagem de Perfil" />
         <label htmlFor="editImageProfile">Editar Foto</label>
         <input id="editImageProfile" type="file" onChange={handleImage} />
       </section>
@@ -87,25 +94,21 @@ function Answer({ answer }) {
   return (
     <section>
       <header>
-        <img
-          src={answer.Student.profile_image || imgProfile}
-          alt="Imagem de perfil"
-        />
+        <img src={answer.Student.image || imgProfile} alt="Imagem de Perfil" />
         <strong>
-          {" "}
           por{" "}
           {student.studentId === answer.Student.id
             ? "Você"
             : answer.Student.name}
         </strong>
-        <p> {format(new Date(answer.created_at), "dd/MM/yyyy 'as' HH:mm")}</p>
+        <p> {format(new Date(answer.created_at), "dd/MM/yyyy 'às' HH:mm")}</p>
       </header>
       <p>{answer.description}</p>
     </section>
   );
 }
 
-function Question({ question, setLoading, setCurrentGist }) {
+function Question({ question, setIsLoading, setCurrentGist }) {
   const [showAnswers, setShowAnswers] = useState(false);
 
   const [newAnswer, setNewAnswer] = useState("");
@@ -121,9 +124,10 @@ function Question({ question, setLoading, setCurrentGist }) {
   const handleAddAnswer = async (e) => {
     e.preventDefault();
 
-    if (newAnswer.length < 10) return alert("Minimo de caracteres: 10");
+    if (newAnswer.length < 10)
+      return alert("A resposta deve ter no mínimo 10 caracteres");
 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const response = await api.post(`/questions/${question.id}/answers`, {
@@ -139,7 +143,7 @@ function Question({ question, setLoading, setCurrentGist }) {
         Student: {
           id: aluno.studentId,
           name: aluno.name,
-          profile_image: aluno.profile_image,
+          image: aluno.image,
         },
       };
 
@@ -147,10 +151,10 @@ function Question({ question, setLoading, setCurrentGist }) {
 
       setNewAnswer("");
 
-      setLoading(false);
+      setIsLoading(false);
     } catch (error) {
       alert(error);
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -160,26 +164,26 @@ function Question({ question, setLoading, setCurrentGist }) {
     <QuestionCard>
       <header>
         <img
-          src={question.Student.profile_image || imgProfile}
-          alt="Imagem de Perfil"
+          src={question.Student.image || imgProfile}
+          alt="Imagem de perfil"
         />
         <strong>
           por{" "}
-          {student.studenId === question.Student.id
+          {student.studentId === question.Student.id
             ? "Você"
             : question.Student.name}
         </strong>
         <p>
-          em {format(new Date(question.created_at), "dd/MM/yyyy 'as' HH:mm")}
+          em {format(new Date(question.created_at), "dd/MM/yyyy 'às' HH:mm")}
         </p>
         {question.gist && (
           <GistIcon onClick={() => setCurrentGist(question.gist)} />
         )}
       </header>
       <section>
-        <strong>{question.title} </strong>
+        <strong>{question.title}</strong>
         <p>{question.description}</p>
-        <img src={question.image} />
+        {question.image && <img src={question.image} alt="Imagem da questão" />}
       </section>
       <footer>
         <h1 onClick={() => setShowAnswers(!showAnswers)}>
@@ -188,15 +192,14 @@ function Question({ question, setLoading, setCurrentGist }) {
           ) : (
             <>
               {qtdAnswers}
-              {qtdAnswers > 1 ? " Respostas " : " Resposta "}
+              {qtdAnswers > 1 ? " Respostas" : " Resposta"}
             </>
           )}
         </h1>
         {showAnswers && (
           <>
-            {" "}
             {answers.map((answer) => (
-              <Answer answer={answer} />
+              <Answer key={answer.id} answer={answer} />
             ))}
           </>
         )}
@@ -207,7 +210,7 @@ function Question({ question, setLoading, setCurrentGist }) {
             onChange={(e) => setNewAnswer(e.target.value)}
             required
             value={newAnswer}
-          ></textarea>
+          />
           <button>Enviar</button>
         </form>
       </footer>
@@ -215,7 +218,7 @@ function Question({ question, setLoading, setCurrentGist }) {
   );
 }
 
-function NewQuestion({ handleReload, setLoading }) {
+function NewQuestion({ handleReload, setIsLoading }) {
   const [newQuestion, setNewQuestion] = useState({
     title: "",
     description: "",
@@ -266,6 +269,7 @@ function NewQuestion({ handleReload, setLoading }) {
       imageRef.current.src = "";
       imageRef.current.style.display = "none";
     }
+
     setImage(e.target.files[0]);
   };
 
@@ -298,7 +302,7 @@ function NewQuestion({ handleReload, setLoading }) {
     if (image) data.append("image", image);
     if (newQuestion.gist) data.append("gist", newQuestion.gist);
 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       await api.post("/questions", data, {
@@ -310,61 +314,58 @@ function NewQuestion({ handleReload, setLoading }) {
       handleReload();
     } catch (error) {
       alert(error);
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <>
-      <FormNewQuestion onSubmit={handleAddNewQuestion}>
-        <Input
-          id="title"
-          label="Título"
-          value={newQuestion.title}
-          handler={handleInput}
-          required
-        />
-        <Input
-          id="description"
-          label="Descrição"
-          minLength="10"
-          value={newQuestion.description}
-          handler={handleInput}
-          required
-        />
-        <Input
-          id="gist"
-          label="Gist"
-          value={newQuestion.gist}
-          handler={handleInput}
-        />
-        <Select
-          id="categories"
-          label="Categorias"
-          handler={handleCategories}
-          ref={categoriesRef}
-        >
-          <option value="">Selecione</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.description}
-            </option>
-          ))}
-        </Select>
-        <div>
-          {categoriesSel.map((c) => (
-            <Tag
-              key={c.id}
-              info={c.description}
-              handleClose={() => handleUnselCategory(c.id)}
-            ></Tag>
-          ))}
-        </div>
-        <input type="file" onChange={handleImage} />
-        <img alt="Pré-visualização" ref={imageRef} />
-        <button onClick={() => setLoading(true)}>Enviar</button>
-      </FormNewQuestion>
-    </>
+    <FormNewQuestion onSubmit={handleAddNewQuestion}>
+      <Input
+        id="title"
+        label="Título"
+        value={newQuestion.title}
+        handler={handleInput}
+        required
+      />
+      <Input
+        id="description"
+        label="Descrição"
+        value={newQuestion.description}
+        handler={handleInput}
+        required
+      />
+      <Input
+        id="gist"
+        label="Gist"
+        value={newQuestion.gist}
+        handler={handleInput}
+      />
+      <Select
+        id="categories"
+        label="Categorias"
+        handler={handleCategories}
+        ref={categoriesRef}
+      >
+        <option value="">Selecione</option>
+        {categories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.description}
+          </option>
+        ))}
+      </Select>
+      <div>
+        {categoriesSel.map((c) => (
+          <Tag
+            key={c.id}
+            info={c.description}
+            handleClose={() => handleUnselCategory(c.id)}
+          ></Tag>
+        ))}
+      </div>
+      <input type="file" onChange={handleImage} />
+      <img alt="Pré-visualização" ref={imageRef} />
+      <button>Enviar</button>
+    </FormNewQuestion>
   );
 }
 
@@ -391,24 +392,45 @@ function Home() {
 
   const [reload, setReload] = useState(null);
 
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [isLoadingFeed, setIsLoadingFeed] = useState(false);
 
   const [showNewQuestion, setShowNewQuestion] = useState(false);
 
   const [currentGist, setCurrentGist] = useState(undefined);
 
+  const [page, setPage] = useState(1);
+
+  const [totalQuestions, setTotalQuestions] = useState(0);
+
   const [search, setSearch] = useState("");
 
+  const feedRef = useRef();
+
+  const loadQuestions = async () => {
+    //se ainda estiver buscando, nao busca denovo
+    if (isLoadingFeed) return;
+
+    //se tiver chego no fim, não busca denovo
+    if (totalQuestions > 0 && totalQuestions == questions.length) return;
+
+    setIsLoadingFeed(true);
+
+    const response = await api.get("/feed", {
+      params: { page },
+    });
+
+    setPage(page + 1);
+
+    setQuestions([...questions, ...response.data]);
+
+    setTotalQuestions(response.headers["x-total-count"]);
+
+    setIsLoadingFeed(false);
+  };
+
   useEffect(() => {
-    const loadQuestions = async () => {
-      setLoading(true);
-
-      const response = await api.get("/feed");
-
-      setQuestions(response.data);
-      setLoading(false);
-    };
-
     loadQuestions();
   }, [reload]);
 
@@ -420,26 +442,42 @@ function Home() {
 
   const handleReload = () => {
     setShowNewQuestion(false);
+    setIsLoading(false);
+    setPage(1);
+    setQuestions([]);
     setReload(Math.random());
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
+  const feedScrollObserver = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
 
-    const loadQuestions = async () => {
-      setLoading(true);
-      const response = await api.get(`/search/:description${e.target.value}`);
+    if (scrollTop + clientHeight > scrollHeight - 100 && search.length < 4)
+      loadQuestions();
+  };
+
+  const handleSearch = async (e) => {
+    setSearch(e.target.value);
+
+    if (e.target.value.length === 0) handleReload();
+
+    if (e.target.value.length < 4) return;
+
+    try {
+      const response = await api.get("/questions", {
+        params: { search: e.target.value },
+      });
+
       setQuestions(response.data);
-      setLoading(false);
-      return response;
-    };
-
-    loadQuestions();
+      setIsLoadingFeed(false);
+    } catch (error) {
+      alert(error);
+      console.log(error);
+    }
   };
 
   return (
     <>
-      {loading && <Loading />}
+      {isLoading && <Loading />}
 
       <Gist gist={currentGist} handleClose={setCurrentGist} />
 
@@ -448,28 +486,38 @@ function Home() {
           title="Faça uma pergunta"
           handleClose={() => setShowNewQuestion(false)}
         >
-          <NewQuestion handleReload={handleReload} setLoading={setLoading} />
+          <NewQuestion
+            handleReload={handleReload}
+            setIsLoading={setIsLoading}
+          />
         </Modal>
       )}
-
       <Container>
         <Header>
           <Logo src={logo} onClick={handleReload} />
-          <Search label="Pesquisar" id="search" handler={handleSearch} />
+          <InputSearch handler={handleSearch} value={search} />
           <IconSignOut onClick={handleSignOut} />
         </Header>
         <Content>
           <ProfileContainer>
-            <Profile handleReload={handleReload} setLoading={setLoading} />
+            <Profile handleReload={handleReload} setIsLoading={setIsLoading} />
           </ProfileContainer>
-          <FeedContainer>
+          <FeedContainer ref={feedRef} onScroll={feedScrollObserver}>
+            {questions.length === 0 &&
+              search.length > 3 &&
+              "Nenhuma questão encontrada"}
             {questions.map((q) => (
               <Question
+                key={q.id}
                 question={q}
-                setLoading={setLoading}
+                setIsLoading={setIsLoading}
                 setCurrentGist={setCurrentGist}
               />
             ))}
+            {isLoadingFeed && <SpinnerLoading />}
+            {totalQuestions > 0 &&
+              totalQuestions == questions.length &&
+              "Isso é tudo pessoal"}
           </FeedContainer>
           <ActionsContainer>
             <button onClick={() => setShowNewQuestion(true)}>

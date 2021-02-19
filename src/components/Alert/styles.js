@@ -13,10 +13,11 @@ export const Container = styled.div`
 
   border-radius: 4px;
   background-color: ${(props) =>
-    props.type === "error" ? "#d90429cc" : "#04d929cc"};
+    props.type === "error" ? "#d90429aa" : "#04d929aa"};
 
   white-space: nowrap;
   overflow: hidden;
+
   > h1 {
     font-size: 18px;
     margin: 5px;

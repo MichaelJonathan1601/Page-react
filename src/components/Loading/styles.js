@@ -1,10 +1,9 @@
 import styled, { keyframes } from "styled-components";
 
 const spin = keyframes`
-100%{
+  100%{
     transform: rotate(360deg);
-}
-
+  }
 `;
 
 export const Container = styled.div`
@@ -27,7 +26,8 @@ export const Container = styled.div`
     height: 100px;
     border-radius: 50%;
     opacity: 0.8;
-    border: 10px solid var(--dark);
+    margin-bottom: 10px;
+    border: 2px solid var(--dark);
 
     animation: ${spin} 1s linear infinite;
   }
