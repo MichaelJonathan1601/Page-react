@@ -37,6 +37,7 @@ export const IconSearch = styled(FaSearch)`
   left: 10px;
 
   font-size: 20px;
+
   color: var(--darkGray);
 
   cursor: pointer;

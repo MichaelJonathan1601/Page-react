@@ -290,6 +290,8 @@ function NewQuestion({ handleReload, setIsLoading }) {
   const handleAddNewQuestion = async (e) => {
     e.preventDefault();
 
+    if (categoriesSel.length === 0) return alert("Selecione uma categoria");
+
     const data = new FormData();
 
     data.append("title", newQuestion.title);
@@ -325,6 +327,7 @@ function NewQuestion({ handleReload, setIsLoading }) {
         label="Título"
         value={newQuestion.title}
         handler={handleInput}
+        minLength="5"
         required
       />
       <Input
@@ -332,12 +335,14 @@ function NewQuestion({ handleReload, setIsLoading }) {
         label="Descrição"
         value={newQuestion.description}
         handler={handleInput}
+        minLength="10"
         required
       />
       <Input
         id="gist"
         label="Gist"
         value={newQuestion.gist}
+        minLength="20"
         handler={handleInput}
       />
       <Select
@@ -408,11 +413,11 @@ function Home() {
 
   const feedRef = useRef();
 
-  const loadQuestions = async () => {
-    //se ainda estiver buscando, nao busca denovo
+  const loadQuestions = async (reload) => {
+    //se já tiver buscando, não busca de novo
     if (isLoadingFeed) return;
 
-    //se tiver chego no fim, não busca denovo
+    //se tiver chego no fim, não busca de novo
     if (totalQuestions > 0 && totalQuestions == questions.length) return;
 
     setIsLoadingFeed(true);
@@ -426,6 +431,8 @@ function Home() {
     setQuestions([...questions, ...response.data]);
 
     setTotalQuestions(response.headers["x-total-count"]);
+
+    console.log(totalQuestions);
 
     setIsLoadingFeed(false);
   };
@@ -445,6 +452,7 @@ function Home() {
     setIsLoading(false);
     setPage(1);
     setQuestions([]);
+    setSearch("");
     setReload(Math.random());
   };
 
@@ -468,7 +476,6 @@ function Home() {
       });
 
       setQuestions(response.data);
-      setIsLoadingFeed(false);
     } catch (error) {
       alert(error);
       console.log(error);
@@ -517,7 +524,7 @@ function Home() {
             {isLoadingFeed && <SpinnerLoading />}
             {totalQuestions > 0 &&
               totalQuestions == questions.length &&
-              "Isso é tudo pessoal"}
+              "Isso é tudo"}
           </FeedContainer>
           <ActionsContainer>
             <button onClick={() => setShowNewQuestion(true)}>

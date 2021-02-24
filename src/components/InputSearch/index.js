@@ -1,5 +1,5 @@
-import { Container, IconSearch } from "./styles";
 import { useRef } from "react";
+import { Container, IconSearch } from "./styles";
 
 function InputSearch({ id, label, value, handler, ...rest }) {
   const inputRef = useRef();
